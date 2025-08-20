@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勝手にかけるようになっちゃった君</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Kaku+Gothic+New&display=swap');
+
+        body {
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            background-color: #ffe4e6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 10px 30px rgba(255, 182, 193, 0.5);
+            padding: 2.5rem;
+        }
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-image: linear-gradient(to right, #ff9a9e, #fad0c4);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 182, 193, 0.7);
+        }
+        .btn-collection {
+            background-image: linear-gradient(to right, #84fab0, #8fd3f4);
+        }
+        .btn-collection:hover {
+             box-shadow: 0 4px 15px rgba(132, 250, 176, 0.7);
+        }
+        .grade-select {
+            appearance: none;
+            background-color: #fff8f8;
+            border: 2px solid #ffb6c1;
+            border-radius: 1.5rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .grade-select:hover {
+            background-color: #ffebeb;
+        }
+        .textarea-custom {
+            resize: none;
+            height: 200px;
+            border-radius: 1.5rem;
+            border: 2px solid #ffb6c1;
+            background-color: #fff8f8;
+        }
+        .feedback-box {
+            border-radius: 2rem;
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+        .score-S { background-color: #d1fae5; color: #065f46; }
+        .score-A { background-color: #dbeafe; color: #1e40af; }
+        .score-B { background-color: #fef3c7; color: #92400e; }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ff69b4;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.is-visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+        .collection-card {
+            background-color: #f0fff4;
+            border: 2px solid #84fab0;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: left;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .collection-word {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2f855a;
+            font-family: 'Mochiy Pop One', sans-serif;
+        }
+        .collection-context {
+            margin-top: 0.5rem;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="bg-pink-50 min-h-screen flex items-center justify-center">
+
+<div class="container">
+    <div class="card">
+        <h1 class="text-4xl font-extrabold text-center text-pink-500 mb-2 font-['Mochiy_Pop_One']">
+            <span class="inline-block transform -rotate-12">🎉</span>
+            <span class="inline-block transform rotate-6">勝手にかけるようになっちゃった君</span>
+            <span class="inline-block transform rotate-12">📝</span>
+        </h1>
+        <p class="text-center text-gray-500 mb-8 whitespace-nowrap" id="header-text"></p>
+
+        <!-- 学年選択と文章入力 -->
+        <div class="space-y-6">
+            <div>
+                <label for="grade-select" class="block text-gray-700 font-bold mb-2" id="grade-label"></label>
+                <select id="grade-select" class="w-full grade-select focus:ring-2 focus:ring-pink-300 focus:border-pink-300">
+                    <option value="1">1年生</option>
+                    <option value="2">2年生</option>
+                    <option value="3">3年生</option>
+                    <option value="4">4年生</option>
+                    <option value="5">5年生</option>
+                    <option value="6">6年生</option>
+                </select>
+            </div>
+            <div>
+                <label for="text-input" class="block text-gray-700 font-bold mb-2" id="text-label"></label>
+                <textarea id="text-input" class="w-full p-4 border rounded-lg textarea-custom focus:ring-2 focus:ring-pink-300 focus:border-pink-300" placeholder="ここに文章を入力してください..."></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="analyze-button" class="btn bg-pink-400 text-white hover:bg-pink-500 flex items-center justify-center w-full sm:w-auto">
+                    ここでチェック！
+                </button>
+                <button id="collection-button" class="btn btn-collection flex items-center justify-center w-full sm:w-auto">
+                    キラキラワード・コレクション
+                </button>
+            </div>
+        </div>
+
+        <!-- 結果表示エリア -->
+        <div id="result-area" class="mt-8 hidden">
+            <h2 class="text-2xl font-bold text-center text-pink-500 mb-4">③ 結果だよ！</h2>
+            <div id="feedback-content" class="feedback-box">
+                <!-- フィードバックがここに動的に挿入されます -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- コレクション表示用モーダル -->
+<div id="collection-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="text-2xl font-bold mb-6 text-green-600 font-['Mochiy_Pop_One']">キラキラワード・コレクション</h3>
+        <div id="collection-grid" class="space-y-4">
+            <!-- コレクションカードがここに挿入されます -->
+        </div>
+        <button id="close-collection-modal" class="mt-8 px-6 py-2 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition">とじる</button>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const analyzeButton = document.getElementById('analyze-button');
+        const gradeSelect = document.getElementById('grade-select');
+        const textInput = document.getElementById('text-input');
+        const resultArea = document.getElementById('result-area');
+        const feedbackContent = document.getElementById('feedback-content');
+        const headerText = document.getElementById('header-text');
+        const gradeLabel = document.getElementById('grade-label');
+        const textLabel = document.getElementById('text-label');
+        
+        const collectionButton = document.getElementById('collection-button');
+        const collectionModal = document.getElementById('collection-modal');
+        const closeCollectionModalButton = document.getElementById('close-collection-modal');
+        const collectionGrid = document.getElementById('collection-grid');
+
+        const curriculumContent = `
+            # 小学校学習指導要領(平成29年告示)解説 国語編
+            ## 育成を目指す資質・能力
+            言葉による見方・考え方を働かせ，言語活動を通して，国語で正確に理解し適切に表現する資質・ 能力を育成することを目指す。
+            ## 第1学年及び第2学年の内容
+            ### 書くこと
+            ⑴ 経験したことや想像したことなどから書くことを見付け，必要な事柄を集めたり確かめたりして，伝えたいことを明確にすること。
+            ⑵ 自分の思いや考えが明確になるように，事柄の順序に沿って簡単な構成を考えること。
+            ⑶ 語と語や文と文との続き方に注意しながら，内容のまとまりが分かるように書き表し方を工夫すること。
+            ⑷ 文章を読み返す習慣を付けるとともに，間違いを正したり，語と語や文と文との続き方を確かめたりすること。
+            ⑸ 文章に対する感想を伝え合い，自分の文章の内容や表現のよいところを見付けること。
+            ## 第3学年及び第4学年の内容
+            ### 書くこと
+            ⑴ 相手や目的を意識して，経験したことや想像したことなどから書くことを選び，集めた材料を比較したり分類したりして，伝えたいことを明確にすること。
+            ⑵ 書く内容の中心を明確にし，内容のまとまりで段落をつくったり、段落相互の関係に注意したりして，文章の構成を考えること。
+            ⑶ 自分の考えとそれを支える理由や事例との関係を明確にして，書き表し方を工夫すること。
+            ⑷ 文章を読み返し，誤字・脱字を正したり，語句の用法を確かめたりすること。
+            ⑸ 文章に対する質問や感想を伝え合い，表現の仕方について話し合うこと。
+            ## 第5学年及び第6学年の内容
+            ### 書くこと
+            ⑴ 目的や意図に応じて，感じたことや考えたことなどから書くことを選び，集めた材料を分類したり関係付けたりして，伝えたいことを明確にすること。
+            ⑵ 筋道の通った文章となるように，文章全体の構成や展開を考えること。
+            ⑶ 目的や意図に応じて簡単に書いたり詳しく書いたりするとともに，事実と感想，意見とを区別して書いたりするなど，自分の考えが伝わるように書き表し方を工夫すること。
+            ⑷ 文章を読み返し，表現の仕方について見直すこと。
+            ⑸ 文章に対する意見や質問を伝え合い，自分の文章を客観的に見つめること。
+        `;
+        
+        const shortTextFeedbackExamples = {
+            '1': [ "きょう、こうえんでブランコにのったら、そらをとんでるみたいでたのしかった。", "きょう、かぞくといっしょにカレーをつくったよ。まぜるのがたのしかった。", "きょう、せんせいにほめられて、すごくうれしかったよ。", "おもちゃのくるまがこわれてしまって、かなしかった.", "にんぎょうのおみせにいったら、ほしかったものがぜんぶうりきれで、おこった。", "きょうのあさは、とてもさむくてつらかったよ。はやくあったかくならないな。" ],
+            '2': [ "きょう、こうえんでブランコにのったら、そらをとんでいるみたいで、とてもたのしかったよ。", "きょう、かぞくといっしょにカレーをつくったよ。まぜるのがとてもたのしかった。", "きょう、せんせいにほめられて、とてもうれしかったよ。", "おもちゃのくるまがこわれてしまって、とてもかなしかった。どうやってなおそうかな。", "にんぎょうのおみせにいったら、ほしかったものがぜんぶうりきれで、とてもおこった。", "きょうのあさは、とてもさむくてつらかった。はやくあったかくならないかな。" ],
+            '3': [ "今日の遠足はとても楽しかった。お弁当がおいしかったし、みんなと遊ぶのも面白かった。", "弟がひらがなをかけるようになって、とてもうれしかった。何度も練習したのを知っているから。", "だいすきだったハムスターが死んでしまって、とてもかなしかった。もう会えないと思うと涙が出た。", "友達が約束を破ったから、おこった。もう一緒に遊ばないと思ったけど、ちゃんと謝ってくれたからゆるした。", "今日あったテストがとても難しくて、つらかった。もう勉強したくないと思ったけど、がんばるしかない。", "朝起きてすぐに足がいたくてつらかった。歩くのがつらいので学校を休もうかと考えた。" ],
+            '4': [ "今日の遠足はとても楽しかった。お弁当がおいしかったし、みんなと遊ぶのも面白かった。", "弟がひらがなをかけるようになって、とてもうれしかった。何度も練習したのを知っているから。", "だいすきだったハムスターが死んでしまって、とてもかなしかった。もう会えないと思うと涙が出た。", "友達が約束を破ったから、おこった。もう一緒に遊ばないと思ったけど、ちゃんと謝ってくれたからゆるした.", "今日あったテストがとても難しくて、つらかった。もう勉強したくないと思ったけど、がんばるしかない。", "朝起きてすぐに足がいたくてつらかった。歩くのがつらいので学校を休もうかと考えた。" ],
+            '5': [ "今日の遠足はとても楽しかった。お弁当がおいしかったし、友達と遊ぶのも面白かった。", "弟がひらがなをかけるようになって、とてもうれしかった。何度も練習したのを知っているから。", "だいすきだったハムスターが死んでしまって、とてもかなしかった。もう会えないと思うと涙が出た。", "友達が約束を破ったから、おこった。もう一緒に遊ばないと思ったけど、ちゃんと謝ってくれたからゆるした。", "今日あったテストがとても難しくて、つらかった。もう勉強したくないと思ったけど、がんばるしかない。", "朝起きてすぐに足がいたくてつらかった。歩くのがつらいので学校を休もうかと考えた。" ],
+            '6': [ "今日の遠足はとても楽しかった。お弁当がおいしかったし、友達と遊ぶのも面白かった。", "弟がひらがなをかけるようになって、とてもうれしかった。何度も練習したのを知っているから。", "だいすきだったハムスターが死んでしまって、とてもかなしかった。もう会えないと思うと涙が出た。", "友達が約束を破ったから、おこった。もう一緒に遊ばないと思ったけど、ちゃんと謝ってくれたからゆるした。", "今日あったテストがとても難しくて、つらかった。もう勉強したくないと思ったけど、がんばるしかない。", "朝起きてすぐに足がいたくてつらかった。歩くのがつらいので学校を休もうかと考えた。" ]
+        };
+
+        const examplePrompts = {
+            'happy': "楽しかったことやうれしかったこと", 'sad': "かなしかったことやつらかったこと", 'angry': "おこったことや腹が立ったこと", 'experience': "経験したことや学んだこと"
+        };
+        
+        const inappropriateKeywords = ['凡人', 'ダメ', '貴様', '苦しめる', '殺す', '死ね', 'バカ', 'アホ', '売春', '性', 'レイプ', 'セックス', 'ポルノ', 'くそ', 'ちんこ', 'まんこ', 'おっぱい'];
+
+        function getRandomExamplePrompt() {
+            const keys = Object.keys(examplePrompts);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            return examplePrompts[randomKey];
+        }
+
+        function sanitizeInput(text) {
+            const cleanText = text.replace(/[^ぁ-んァ-ヶ一-龠ーa-zA-Z0-9\s.,?!。、！？]/g, '');
+            return cleanText.trim();
+        }
+
+        function containsInappropriateContent(text) {
+            const lowerCaseText = text.toLowerCase();
+            return inappropriateKeywords.some(keyword => lowerCaseText.includes(keyword));
+        }
+
+        function updateText() {
+            headerText.innerHTML = "さぁ、みんなで文章書ける人を目ざそう！";
+            gradeLabel.innerHTML = "① 自分の学年を入力しよう！";
+            textLabel.innerHTML = `② アプリに自分の書いた文章を入力しよう！`;
+        }
+        
+        function showMessage(message, title = "あれれ？") {
+            const existingBox = document.querySelector('.message-modal-overlay');
+            if(existingBox) {
+                existingBox.remove();
+            }
+
+            const messageBox = document.createElement('div');
+            messageBox.className = 'modal-overlay message-modal-overlay';
+            messageBox.innerHTML = `
+                <div class="modal-content" style="width: 400px;">
+                    <h3 class="text-xl font-bold mb-4">${title}</h3>
+                    <p>${message}</p>
+                    <button class="mt-6 px-6 py-2 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition">OK</button>
+                </div>
+            `;
+            document.body.appendChild(messageBox);
+            
+            messageBox.querySelector('button').addEventListener('click', () => {
+                messageBox.classList.remove('is-visible');
+                setTimeout(() => {
+                    messageBox.remove();
+                }, 300);
+            });
+
+            setTimeout(() => {
+                 messageBox.classList.add('is-visible');
+            }, 10);
+        }
+        
+        updateText();
+        gradeSelect.addEventListener('change', updateText);
+        
+        analyzeButton.addEventListener('click', async () => {
+            const grade = gradeSelect.value;
+            const originalText = textInput.value;
+            const text = sanitizeInput(originalText);
+
+            if (text === '') {
+                showMessage("文章が入力されていないよ。何か書いてみよう！");
+                return;
+            }
+
+            if (containsInappropriateContent(text)) {
+                const inappropriateFeedback = {
+                    score: "B",
+                    evaluation: "その言葉は評価できません。",
+                    encouragement: "先生は、あなたが一生懸命文章を書いてくれていることを知っています。",
+                    next_step: "言葉には、だれかを元気づけたり、優しい気持ちにさせる力があります。今度は、そんな言葉を選んで、心温まる文章を書いてみようね。",
+                    examples: [],
+                    kirakira_words: []
+                };
+                displayFeedback(inappropriateFeedback, text);
+                return;
+            }
+            
+            if (text.length < 10) {
+                const shortTextExamples = shortTextFeedbackExamples[grade];
+                const examples = [];
+                for (let i = 0; i < 2; i++) {
+                    const randomIndex = Math.floor(Math.random() * shortTextExamples.length);
+                    examples.push(`たとえばこんな文：${shortTextExamples[randomIndex]}`);
+                }
+                const shortTextFeedback = {
+                    score: "B",
+                    evaluation: "まだちょっと短い文章だね。もっとくわしく書いてみよう！",
+                    encouragement: "文字をかくのがじょうずだね！",
+                    next_step: "なにがあったのかを、もっとくわしくかいてみよう。",
+                    examples: examples,
+                    kirakira_words: []
+                };
+                displayFeedback(shortTextFeedback, text);
+                return;
+            }
+            
+            analyzeButton.disabled = true;
+            analyzeButton.innerHTML = `<span class="spinner"></span> <span class="text-xs">評価中...</span>`;
+
+            try {
+                // ★★★ AIへの指示を修正 ★★★
+                const prompt = `あなたは学校の先生です。以下の指示と参考資料を基に、子供の文章を評価し、フィードバックとアドバイスを日本語で生成してください。
+                
+                # 指示
+                1. ユーザーは「学年」と「文章」を入力します。
+                2. 参考資料に記載されている、選択された学年の「書くこと」に関する学習指導要領の基準に則って、文章を評価してください。
+                3. 評価は以下の3段階で行ってください。
+                   - S：選択した学年よりも高い学年の基準に達している
+                   - A：選択した学年の基準に達している
+                   - B：選択した学年の基準に達していない
+                4. 評価の根拠を明確にしてください。子どもが理解しやすいように、難しい言葉や専門用語（例：「学習指導要領」「文法」「修飾語」など）は使わないでください。代わりに、「文のまとまり方」「言葉の選び方」「気持ちの表現」などの、子どもに寄り添った言葉で具体的に説明してください。
+                5. 評価結果は、評価（S/A/B）と、その理由、子供の頑張りを褒める励ましの言葉、そして次のステップにつながる具体的なアドバイスを含めてください。
+                6. もし文章に以下の表現技法が使われていたら、その頑張りを特に褒めてあげてください。
+                   - 擬音語・擬態語（例：ワンワン、ふわふわ）
+                   - 直喩（比喩）（例：まるで氷のように冷たい）
+                   - 擬人化（例：花が喜んで踊っている）
+                   - 情景描写（例：夕日が空をオレンジ色に染めていく）
+                7. **フィードバックの文章は、子どもが読みやすいように工夫してください。**
+                   - **1・2年生向け**：基本的な漢字以外はひらがなを多く使ってください。全体的にひらがなを多くし、やさしい言葉で話しかけるようにしてください。
+                   - **3年生以上向け**：その学年で習う漢字や少し難しい言葉に、<ruby>漢字<rt>かんじ</rt></ruby>のように、文字の上にふりがな（ルビ）を付けてください。
+                   - 全学年共通で、子どもに寄り添った、やさしい文章になるように工夫してください。
+                8. 評価文では、子供の名前を特定するような表現は一切使わないでください。
+                9. 評価の理由を3文程度に短く、簡潔に記述してください。
+                10. 次のステップにつながる具体的なアドバイスの後、そのアドバイスに合った具体的な例文を2つ、"examples"という配列に格納して示してください。
+                11. 文章中から「キラキラワード」（比喩、擬音語、擬態語など、文章を素敵にする表現）を見つけたら、その単語と、その単語が使われている文脈（短い一文）をセットで抽出し、"kirakira_words"に格納してください。見つからなければ空の配列にしてください。
+                12. **いかなる場合でも、必ず指定されたJSONスキーマに従って応答を生成してください。** 評価が難しい場合でも、JSON構造を維持し、その旨をevaluationフィールドに記述してください。
+
+                # JSONスキーマ
+                {
+                  "score": "S" | "A" | "B",
+                  "evaluation": "文章の評価理由を具体的に記述してください。",
+                  "encouragement": "頑張りを褒める言葉を記述してください。",
+                  "next_step": "次のステップにつながる具体的なアドバイスを記述してください。",
+                  "examples": ["例文1", "例文2"],
+                  "kirakira_words": [
+                    { "word": "抽出したキラキラワード", "context": "そのワードが使われている文脈" }
+                  ]
+                }
+                
+                # 学年
+                ${grade}
+                
+                # 文章
+                ${text}
+                
+                # 参考資料
+                ${curriculumContent}
+                `;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "score": { "type": "STRING", "enum": ["S", "A", "B"] },
+                                "evaluation": { "type": "STRING" },
+                                "encouragement": { "type": "STRING" },
+                                "next_step": { "type": "STRING" },
+                                "examples": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                "kirakira_words": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "word": { "type": "STRING" },
+                                            "context": { "type": "STRING" }
+                                        },
+                                        "required": ["word", "context"]
+                                    }
+                                }
+                            },
+                            "required": ["score", "evaluation", "encouragement", "next_step", "examples", "kirakira_words"]
+                        }
+                    }
+                };
+
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                
+                let response;
+                let result;
+                let retries = 0;
+                const maxRetries = 3;
+                let success = false;
+                while (retries < maxRetries && !success) {
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        result = await response.json();
+                        if (response.status === 429) {
+                            retries++;
+                            const delay = Math.pow(2, retries) * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue;
+                        }
+                        success = true;
+                    } catch (error) {
+                        retries++;
+                        const delay = Math.pow(2, retries) * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+
+                if (success && result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    let feedback;
+                    // ★★★ JSONパースのエラーハンドリングを強化 ★★★
+                    try {
+                        const jsonString = result.candidates[0].content.parts[0].text;
+                        feedback = JSON.parse(jsonString);
+                    } catch (parseError) {
+                        console.error("JSON Parse Error:", parseError);
+                        // パースに失敗した場合、フォールバックのフィードバックを表示
+                        const corruptedFeedback = { score: "B", evaluation: "ごめんなさい。AIせんせいが、ちょっとめずらしいぶんしょうで、びっくりしちゃったみたい。もういちど、ぶんしょうをかいてみてね。", encouragement: "ぶんしょうをかいてくれたこと、せんせいはとてもうれしいよ！", next_step: "もういちど、「ここでチェック！」をおしてみてくれるかな。", examples: [], kirakira_words: [] };
+                        displayFeedback(corruptedFeedback, originalText);
+                        return; // ここで処理を終了
+                    }
+
+
+                    const isCorrupted = (text) => {
+                        const repetitionRegex = /(\p{sc=Han})\1/u;
+                        return text && repetitionRegex.test(text);
+                    };
+
+                    if (isCorrupted(feedback.evaluation) || isCorrupted(feedback.encouragement) || isCorrupted(feedback.next_step)) {
+                        const corruptedFeedback = { score: "B", evaluation: "ごめんなさい。うまく評価ができませんでした。もう一度、文章を書いてみてね。", encouragement: "あなたが文章を書いてくれたことが、先生はとてもうれしいよ！", next_step: "もう一度、「ここでチェック！」を押してみてくれるかな。", examples: [], kirakira_words: [] };
+                        displayFeedback(corruptedFeedback, originalText);
+                        return;
+                    }
+
+                    displayFeedback(feedback, originalText);
+                    
+                    if (feedback.kirakira_words && feedback.kirakira_words.length > 0) {
+                        let newWordsCount = 0;
+                        feedback.kirakira_words.forEach(item => {
+                            if (saveKirakiraWord(item.word, item.context)) {
+                                newWordsCount++;
+                            }
+                        });
+                        if (newWordsCount > 0) {
+                            setTimeout(() => {
+                                showMessage(`新しいキラキラワードを${newWordsCount}個ゲットしたよ！コレクションを見てみよう！`, "🎉 やったね！");
+                            }, 500);
+                        }
+                    }
+
+                } else {
+                    const fallbackFeedback = { score: "B", evaluation: "ごめんなさい。うまく評価ができませんでした。もう一度、文章を書いてみてね。", encouragement: "あなたが文章を書いてくれたことが、先生はとてもうれしいよ！", next_step: "もう一度、「ここでチェック！」を押してみてくれるかな。", examples: [], kirakira_words: [] };
+                    displayFeedback(fallbackFeedback, originalText);
+                }
+
+            } catch (e) {
+                console.error(e);
+                const errorFeedback = { score: "B", evaluation: "ごめんなさい。評価中に問題が起きてしまいました。もう一度、文章を書いてみてね。", encouragement: "あなたが文章を書いてくれたことが、先生はとてもうれしいよ！", next_step: "もう一度、「ここでチェック！」を押してみてくれるかな。", examples: [], kirakira_words: [] };
+                displayFeedback(errorFeedback, originalText);
+            } finally {
+                analyzeButton.disabled = false;
+                analyzeButton.innerHTML = `ここでチェック！`;
+            }
+        });
+
+        function displayFeedback(feedback, originalText) {
+            const evaluation = feedback.evaluation !== undefined ? feedback.evaluation : "評価の理由が取得できませんでした。";
+            const encouragement = feedback.encouragement !== undefined ? feedback.encouragement : "メッセージが取得できませんでした。";
+            const nextStep = feedback.next_step !== undefined ? feedback.next_step : "次のステップが取得できませんでした。";
+            const examples = feedback.examples !== undefined ? feedback.examples : [];
+            
+            let examplesHtml = '';
+            if (examples.length > 0) {
+                examplesHtml = `<div class="mt-4">
+                                    <h5 class="text-md font-bold text-pink-600">たとえばこんな文</h5>
+                                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                        ${examples.map(ex => `<li>${ex}</li>`).join('')}
+                                    </ul>
+                                   </div>`;
+            }
+
+            const grade = parseInt(gradeSelect.value, 10);
+            let heading1, heading2, heading3;
+
+            if (grade <= 2) {
+                heading1 = 'ひょうかのりゆう';
+                heading2 = 'せんせいからのメッセージ';
+                heading3 = 'つぎのステップ';
+            } else {
+                heading1 = '<ruby>評価<rt>ひょうか</rt></ruby>の<ruby>理由<rt>りゆう</rt></ruby>';
+                heading2 = '<ruby>先生<rt>せんせい</rt></ruby>からのメッセージ';
+                heading3 = '<ruby>次<rt>つぎ</rt></ruby>のステップ';
+            }
+
+            feedbackContent.innerHTML = `
+                <div class="flex items-center space-x-4 mb-4">
+                    <span class="text-4xl font-extrabold px-4 py-2 rounded-full text-white ${feedback.score === 'S' ? 'bg-green-500' : feedback.score === 'A' ? 'bg-blue-500' : 'bg-yellow-500'}">
+                        ${feedback.score}
+                    </span>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">${heading1}</h4>
+                    <p class="text-gray-600">${evaluation}</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">${heading2}</h4>
+                    <p class="text-gray-600">${encouragement}</p>
+                </div>
+                <div class="mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">${heading3}</h4>
+                    <p class="text-gray-600">${nextStep}</p>
+                    ${examplesHtml}
+                </div>
+            `;
+
+            resultArea.classList.remove('hidden');
+            feedbackContent.className = `feedback-box ${feedback.score === 'S' ? 'bg-green-100 text-green-800' : feedback.score === 'A' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`;
+        }
+        
+        function loadKirakiraCollection() {
+            try {
+                const collectionJSON = localStorage.getItem('kirakiraCollection');
+                return collectionJSON ? JSON.parse(collectionJSON) : [];
+            } catch (e) {
+                console.error("Failed to parse kirakiraCollection from localStorage", e);
+                return [];
+            }
+        }
+        
+        function saveKirakiraWord(word, context) {
+            if (!word || !context) return false;
+            let collection = loadKirakiraCollection();
+            const isAlreadyCollected = collection.some(item => item.word === word);
+            if (!isAlreadyCollected) {
+                collection.push({ word, context });
+                localStorage.setItem('kirakiraCollection', JSON.stringify(collection));
+                return true;
+            }
+            return false;
+        }
+
+        function showCollectionModal() {
+            const collection = loadKirakiraCollection();
+            collectionGrid.innerHTML = '';
+
+            if (collection.length === 0) {
+                collectionGrid.innerHTML = '<p class="text-gray-500">まだキラキラワードが集まっていないよ。作文を書いて見つけよう！</p>';
+            } else {
+                collection.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'collection-card';
+                    card.innerHTML = `
+                        <div class="collection-word">${item.word}</div>
+                        <div class="collection-context">「${item.context}」で使ったね！</div>
+                    `;
+                    collectionGrid.appendChild(card);
+                });
+            }
+            collectionModal.classList.add('is-visible');
+        }
+
+        function hideCollectionModal() {
+            collectionModal.classList.remove('is-visible');
+        }
+
+        collectionButton.addEventListener('click', showCollectionModal);
+        closeCollectionModalButton.addEventListener('click', hideCollectionModal);
+        collectionModal.addEventListener('click', (e) => {
+            if (e.target === collectionModal) {
+                hideCollectionModal();
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
