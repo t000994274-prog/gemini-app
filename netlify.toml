@@ -1,0 +1,3 @@
+[build]
+  publish = "gemini-app"
+  functions = "netlify/functions"
